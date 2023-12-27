@@ -87,3 +87,28 @@ export const redirectAfterLoginEffect = createEffect(
   },
   { functional: true, dispatch: false }
 );
+
+export const getCurrentUserEffect = createEffect(
+  (
+    actions$ = inject(Actions),
+    authService = inject(AuthService),
+    storageService = inject(StorageService)
+  ) => {
+    const token = storageService.get('accessToken');
+    if (!token) return of(authActions.getCurrentUserFailure());
+    return actions$.pipe(
+      ofType(authActions.getCurrentUser),
+      switchMap(() => {
+        return authService.getCurrrentUser().pipe(
+          map((currentUser: CurrentUserInterface) => {
+            return authActions.getCurrentUserSuccess({ currentUser });
+          }),
+          catchError(() => {
+            return of(authActions.getCurrentUserFailure());
+          })
+        );
+      })
+    );
+  },
+  { functional: true }
+);
